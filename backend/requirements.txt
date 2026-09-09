@@ -1,0 +1,10 @@
+# --- Web framework (Phase 0/1) ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
+
+# Les dépendances LangChain, LangGraph, SQLAlchemy, ChromaDB, Pandas
+# seront ajoutées progressivement à chaque phase (voir méthode de travail).
+# On évite d'installer d'un coup tout ce dont on n'a pas encore besoin.

@@ -1,0 +1,30 @@
+# Environnements et secrets
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Données (jamais versionnées, trop volumineuses + potentiellement sensibles)
+backend/data/raw/*
+!backend/data/raw/.gitkeep
+backend/data/documents/*
+!backend/data/documents/.gitkeep
+
+# Vector store local
+backend/chroma_db/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

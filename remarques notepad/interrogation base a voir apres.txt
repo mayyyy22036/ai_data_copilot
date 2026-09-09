@@ -1,0 +1,57 @@
+Très bonne question — c'est exactement ce qu'il faut définir maintenant, avant même d'écrire une ligne de code d'agent, parce que ces questions vont devenir ton **jeu de test** pour valider le routing (Phase 6/7) et tes exemples de démo en entretien.
+
+## Un point important d'abord
+
+Rossmann te donne des données **structurées** (SQL + Python), mais **pas de documents texte**. Le RAG a besoin d'un corpus séparé (politiques d'entreprise, guides internes, etc.). On créera ce corpus nous-mêmes plus tard (quelques pages fictives : politique de télétravail, procédure de remboursement, charte data, etc.) — indépendant de Rossmann. Je le mentionne pour que la distinction soit claire dans ta tête : Rossmann = SQL/Python, corpus RAG = documents à écrire.
+
+Voici les interrogations pertinentes classées par outil, basées sur les colonnes réelles (`Store`, `Sales`, `Customers`, `Open`, `Promo`, `Promo2`, `StateHoliday`, `SchoolHoliday`, `StoreType`, `Assortment`, `CompetitionDistance`, `State` via le mapping régional).
+
+## 1. Questions SQL pures (agrégation, groupby, jointures)
+
+- "Quel est le chiffre d'affaires total par région (Land allemand) sur 2015 ?"
+- "Quels sont les 10 magasins avec le plus gros chiffre d'affaires moyen par jour ?"
+- "Combien de magasins de type `StoreType` = 'b' sont ouverts le dimanche ?"
+- "Quelle région a le plus grand nombre de magasins avec un assortiment 'extended' ?"
+
+→ Ces questions testent que l'agent choisit bien SQL (pas Python) : simple SELECT/GROUP BY/JOIN, pas besoin de calcul statistique.
+
+## 2. Questions Python/Pandas pures (statistiques, corrélation)
+
+- "Quelle est la corrélation entre l'activation d'une promo (`Promo`) et le chiffre d'affaires journalier ?"
+- "Y a-t-il une corrélation entre la distance au concurrent le plus proche (`CompetitionDistance`) et les ventes ?"
+- "Quelle est la distribution des ventes selon le type de magasin (`StoreType`) ? Écart-type par groupe ?"
+- "Quelle est la tendance des ventes sur les 6 derniers mois (moyenne mobile) ?"
+
+→ Ces questions nécessitent un calcul (corrélation, écart-type, moyenne mobile) que le SQL brut ne fait pas bien — bon test pour vérifier que l'agent route vers Pandas et pas vers SQL.
+
+## 3. Questions multi-étapes (SQL puis Python, ou l'inverse)
+
+- **"Compare les performances des régions et explique pourquoi la région [X] est moins performante."**
+  → SQL pour extraire le CA par région, puis Python pour croiser avec `Promo`, `CompetitionDistance`, `StoreType` de cette région et identifier les facteurs corrélés à la sous-performance.
+- "Les magasins avec plus de concurrence directe compensent-ils par plus de promotions ?"
+  → SQL pour extraire un sous-ensemble (magasins avec `CompetitionDistance` faible), puis Python pour corréler avec la fréquence de `Promo`.
+- "Quel est l'impact réel des promotions sur les ventes, magasin par magasin, et cet impact varie-t-il selon la région ?"
+  → SQL (jointure `sales` + `store`) puis Python (groupby région + comparaison ventes promo vs non-promo).
+
+→ Ce sont tes meilleurs exemples pour montrer LangGraph en action (Analyze → Route → SQL → Route → Python → Generate), pas juste un simple tool call.
+
+## 4. Questions RAG pures (une fois le corpus créé)
+
+- "Quelle est la politique de télétravail de l'entreprise ?"
+- "Quelle est la procédure pour signaler un incident de sécurité ?"
+- "Quels sont les congés payés prévus dans le règlement intérieur ?"
+
+## 5. Questions hybrides RAG + SQL (le vrai test "agentic")
+
+- "Selon notre politique de reporting interne, quelles métriques dois-je suivre pour les magasins sous-performants — et quels magasins de la région Bayern correspondent à ce critère actuellement ?"
+  → RAG pour extraire la métrique définie dans le document, SQL pour appliquer ce critère aux données réelles.
+
+C'est ce type de question qui impressionne le plus en entretien, parce qu'elle montre que l'agent combine une source documentaire ET une source de données — pas juste un routing binaire.
+
+## Limite honnête à garder en tête
+
+Pas de dimension "produit" dans Rossmann → évite les questions du type "quel produit se vend le mieux", elles ne seront pas répondables avec ce dataset. Toutes tes questions doivent rester au niveau magasin/région/temps.
+
+---
+
+Veux-tu qu'on fige une liste définitive de ~8-10 questions (ton "golden set" de test) qu'on utilisera tout au long du projet pour valider chaque phase, ou on garde ça flexible et on avance vers l'étape suivante (récupération des fichiers) ?
