@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: copilot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: copilot_user
+      POSTGRES_PASSWORD: copilot_pass
+      POSTGRES_DB: copilot_db
+    ports:
+      - "5432:5432"
+    volumes:
+      # Volume nommé : les données survivent même si le conteneur est supprimé
+      # (docker compose down sans --volumes). Sans ça, on perdrait tout à
+      # chaque redémarrage du conteneur.
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Permet à docker-compose (et plus tard à d'autres services qui en
+      # dépendent) de savoir si Postgres est VRAIMENT prêt à accepter des
+      # connexions, pas juste "démarré".
+      test: ["CMD-SHELL", "pg_isready -U copilot_user -d copilot_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
