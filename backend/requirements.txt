@@ -1,16 +1,20 @@
 # --- Web framework (Phase 0/1) ---
 fastapi==0.115.0
-uvicorn[standard]==0.30.6
-pydantic==2.9.2
+pydantic==2.12.5
 pydantic-settings==2.5.2
 python-dotenv==1.0.1
 
 # --- LLM (Phase 1) ---
-google-genai==1.15.0
+google-genai==2.20.0
 
 # --- LangChain (Phase 2) ---
-langchain==0.3.7
-langchain-google-genai==2.0.6
+langchain==1.1.1
+langchain-google-genai==4.4.0
+
+# --- RAG (Phase 3) ---
+langchain-text-splitters==1.0.0
+langchain-chroma==1.0.0
+chromadb==1.0.20
 
 # --- Base de données ---
 sqlalchemy==2.0.35
@@ -19,8 +23,7 @@ psycopg2-binary==2.9.9
 # --- Data (ingestion + futur tool Pandas) ---
 pandas==2.2.3
 
-# --- Data (ingestion + analyse future Phase 5) ---
-pandas==2.2.3
+
 
 # Les dépendances LangChain, LangGraph, SQLAlchemy, ChromaDB, Pandas
 # seront ajoutées progressivement à chaque phase (voir méthode de travail).
