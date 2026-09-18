@@ -10,18 +10,38 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # Volume nommé : les données survivent même si le conteneur est supprimé
-      # (docker compose down sans --volumes). Sans ça, on perdrait tout à
-      # chaque redémarrage du conteneur.
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      # Permet à docker-compose (et plus tard à d'autres services qui en
-      # dépendent) de savoir si Postgres est VRAIMENT prêt à accepter des
-      # connexions, pas juste "démarré".
       test: ["CMD-SHELL", "pg_isready -U copilot_user -d copilot_db"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: copilot_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      # IMPORTANT : ces 2 valeurs ÉCRASENT celles du .env (qui pointent sur
+      # "localhost", valide seulement quand le backend tourne HORS Docker).
+      # Depuis ce conteneur, "postgres" est le nom du service ci-dessus —
+      # Docker Compose résout ce nom en adresse IP automatiquement.
+      DATABASE_URL: postgresql://copilot_user:copilot_pass@postgres:5432/copilot_db
+      DATABASE_URL_READONLY: postgresql://readonly_agent:readonly_dev_pass@postgres:5432/copilot_db
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      # Bind mount : réutilise l'index ChromaDB déjà construit sur ta
+      # machine (Phase 3), pas besoin de le reconstruire dans le conteneur.
+      - ./backend/chroma_db:/app/chroma_db
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
