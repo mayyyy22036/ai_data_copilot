@@ -15,7 +15,8 @@ langchain-google-genai==4.4.0
 langchain-text-splitters==1.0.0
 langchain-chroma==1.0.0
 chromadb==1.0.20
-
+# --- LangGraph (Phase 7) ---
+langgraph==1.0.2
 # --- Base de données ---
 sqlalchemy==2.0.35
 psycopg2-binary==2.9.9

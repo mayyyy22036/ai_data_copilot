@@ -1,0 +1,145 @@
+Oui, là le traceback confirme **exactement** le problème. Ton code arrive jusqu'à la génération de la réponse finale, mais Gemini refuse l'appel parce que ton projet a atteint sa limite quotidienne gratuite.
+
+Le point important est ici :
+
+```text
+Quota exceeded for metric:
+generativelanguage.googleapis.com/generate_content_free_tier_requests
+
+limit: 20
+model: gemini-3.6-flash
+
+quotaId:
+GenerateRequestsPerDayPerProjectPerModel-FreeTier
+```
+
+Donc **ce n'est pas un bug de Phase 5**.
+
+### Ce qui s'est passé
+
+Ton traceback montre que :
+
+```text
+/api/pandas/ask
+      ↓
+answer_with_pandas()
+      ↓
+run_analysis()
+      ↓
+Pandas calcule le résultat ✅
+      ↓
+summary_chain.invoke()
+      ↓
+Gemini 3.6 Flash ❌ 429
+```
+
+Donc c'est même une bonne nouvelle : **ton outil Pandas a fonctionné**. C'est le deuxième appel Gemini, celui qui transforme le résultat Pandas en réponse naturelle, qui est bloqué.
+
+Et ton erreur indique explicitement une limite de **20 requêtes/jour pour ce modèle dans ton projet**.
+
+### Ne change surtout pas vers Gemini 2.5
+
+Dans ton cas, Google limite actuellement l'accès aux modèles 2.5 pour les nouveaux utilisateurs/projets. Le forum officiel Google explique que les nouveaux projets doivent utiliser les modèles plus récents. ([Google AI Developers Forum][1])
+
+`gemini-3.6-flash` est bien un modèle stable actuellement. ([Google AI for Developers][2])
+
+Donc garde :
+
+```env
+GEMINI_MODEL=gemini-3.6-flash
+```
+
+### Mais je te conseille de faire une modification importante maintenant
+
+Notre architecture consomme trop de requêtes Gemini pour un free tier de 20 appels/jour.
+
+Actuellement :
+
+```text
+Question
+   │
+   ├── Gemini #1 → choisir l'analyse
+   │
+   ├── Pandas → calcul
+   │
+   └── Gemini #2 → expliquer le résultat
+```
+
+Donc une seule question = **2 appels Gemini**.
+
+Avec 20 appels/jour, tu peux théoriquement faire seulement ~10 questions complètes.
+
+Et tu as encore SQL + RAG + Chat + Phase 6 à tester.
+
+### Ce que je veux qu'on fasse
+
+**Ne touche pas au modèle.**
+
+On va plutôt optimiser l'architecture :
+
+```text
+                    USER QUESTION
+                         │
+                         ▼
+                  Gemini / Router
+                         │
+             ┌───────────┼───────────┐
+             ▼           ▼           ▼
+           SQL         Pandas        RAG
+             │           │           │
+             └───────────┼───────────┘
+                         ▼
+                  RESULT STRUCTURED
+                         │
+                         ▼
+                  réponse finale
+```
+
+Et surtout, pour certaines opérations, **on n'a pas besoin d'un deuxième appel Gemini**.
+
+Par exemple, pour :
+
+> Quelle est la corrélation entre les promotions et les ventes ?
+
+Pandas peut retourner :
+
+```json
+{
+  "column_x": "promo",
+  "column_y": "sales",
+  "correlation": 0.31
+}
+```
+
+On peut générer directement une réponse :
+
+> La corrélation entre les promotions et les ventes est de 0,31.
+
+**0 appel supplémentaire.**
+
+Cela rend également ton architecture plus intéressante techniquement : le LLM décide **quelle opération déterministe exécuter**, mais le calcul statistique lui-même reste entièrement contrôlé par Python/Pandas.
+
+---
+
+### Et il y a une autre possibilité
+
+Google propose actuellement des modèles Flash-Lite plus orientés vers les tâches légères et économiques, notamment `gemini-3.5-flash-lite`. ([Google AI for Developers][2])
+
+Mais **je ne veux pas que tu changes encore de modèle au hasard**.
+
+Ton erreur actuelle nous donne suffisamment d'informations : `gemini-3.6-flash` fonctionne, ton quota est simplement épuisé.
+
+**Pour ce soir : arrête les tests Gemini.** Attendre le renouvellement du quota évitera de gaspiller davantage les requêtes.
+
+Ensuite, on modifie `pandas_service.py` pour que **Phase 5 puisse fonctionner avec beaucoup moins d'appels Gemini**, puis on reprend les 3 tests :
+
+```text
+1. correlation
+2. groupby_stats
+3. trend
+```
+
+Et après seulement, on passe à **Phase 6 — LangGraph**.
+
+[1]: https://discuss.ai.google.dev/t/gemini-2-5-flash-deprecated-without-warning-earlier-than-shutdown-date/174217/27?utm_source=chatgpt.com "Gemini 2.5 Flash deprecated without warning earlier than shutdown date - #27 by Mahesh_Sutar - Gemini API - Google AI Developers Forum"
+[2]: https://ai.google.dev/gemini-api/docs/models?utm_source=chatgpt.com "Models  |  Gemini API  |  Google AI for Developers"

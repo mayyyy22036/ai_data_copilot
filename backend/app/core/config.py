@@ -19,6 +19,8 @@ class Settings(BaseSettings):
 
     # --- Base de données ---
     database_url: str
+    database_url_readonly: str
+    readonly_db_password: str
 
     # --- Vector store ---
     chroma_persist_dir: str = "./chroma_db"
