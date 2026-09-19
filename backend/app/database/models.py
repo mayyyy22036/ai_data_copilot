@@ -13,7 +13,7 @@ MAGASIN, pas de la vente du jour. Les répéter sur chaque ligne de vente
 veut pouvoir expliquer en entretien.
 """
 
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Text, Boolean, ForeignKey
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 

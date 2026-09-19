@@ -11,8 +11,8 @@ ce script sans dupliquer les données si jamais tu changes quelque chose.
 import pandas as pd
 from sqlalchemy import text
 
-from app.database.session import engine, Base
 from app.database import models  # noqa: F401 — nécessaire pour enregistrer les modèles
+from app.database.session import Base, engine
 
 RAW_DIR = "data/raw"
 

@@ -11,9 +11,9 @@ c'est précisément parce qu'aucune protection n'est infaillible seule
 qu'on empile ces trois niveaux.
 """
 
-from sqlalchemy import text
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 
 from app.core.llm import llm
 from app.database.readonly_session import readonly_engine

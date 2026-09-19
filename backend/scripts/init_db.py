@@ -1,5 +1,5 @@
-from app.database.session import engine, Base
-from app.database.models import Store, Sales  # noqa: F401
+from app.database.models import Sales, Store  # noqa: F401
+from app.database.session import Base, engine
 
 
 def main():
